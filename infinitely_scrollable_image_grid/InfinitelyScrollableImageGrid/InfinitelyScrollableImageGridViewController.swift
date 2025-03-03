@@ -77,7 +77,7 @@ extension InfinitelyScrollableImageGridViewController {
         scrollView.setNeedsLayout()
         scrollView.layoutIfNeeded()
         
-        gridView.setupTiles(with: gridOffset)
+        gridView.initializeGrid(with: gridOffset)
     }
 
     private func setupGestureRecognizers() {

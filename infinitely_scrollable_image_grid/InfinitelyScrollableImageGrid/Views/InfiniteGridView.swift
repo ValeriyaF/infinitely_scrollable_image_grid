@@ -24,7 +24,7 @@ class InfiniteGridView: UIView {
     private let screenSize = UIScreen.main.bounds.size
 
     init(
-        hostScrollView: UIScrollView?,
+        hostScrollView: UIScrollView,
         imageLoader: ImageLoader,
         reuseQueue: ReuseQueue,
         tileSize: CGFloat
@@ -36,16 +36,34 @@ class InfiniteGridView: UIView {
 
         super.init(frame: .zero)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
-    func setupTiles(with gridOffset: CGFloat) {
-        centreContent(with: gridOffset)
-        allocateInitialTiles()
+
+    func initializeGrid(with gridOffset: CGFloat) {
+        centerScrollViewContent(with: gridOffset)
+        updateGridLayout()
 
         hostScrollView?.delegate = self
+    }
+
+    func updateGridLayout() {
+        guard let scrollview = hostScrollView else { return }
+
+        let centre = computedCentreCoordinates(scrollview)
+        guard centre != centreCoordinates else { return }
+        self.centreCoordinates = centre
+        let xTilesRequired = Int(UIScreen.main.bounds.size.width / tileSize)
+        let yTilesRequired = Int(UIScreen.main.bounds.size.height / tileSize)
+        let lowerBoundX = centre.x - xTilesRequired
+        let upperBoundX = centre.x + xTilesRequired
+        let lowerBoundY = centre.y - yTilesRequired
+        let upperBoundY = centre.y + yTilesRequired
+        addTilesInVisibleBounds(lowerX: lowerBoundX, upperX: upperBoundX,
+                                lowerY: lowerBoundY, upperY: upperBoundY)
+        removeTilesOutsideVisibleBounds(lowerX: lowerBoundX, upperX: upperBoundX,
+                                        lowerY: lowerBoundY, upperY: upperBoundY)
     }
 
     func zoom(with scale: CGFloat) {
@@ -55,8 +73,8 @@ class InfiniteGridView: UIView {
         tileSize = newTileSize
         centreCoordinates = .init(x: Int.max, y: Int.max)
 
-        allocateInitialTiles()
-        readjustOffsets()
+        updateGridLayout()
+        realignTilePositionsToCenter()
     }
 }
 
@@ -64,57 +82,32 @@ class InfiniteGridView: UIView {
 extension InfiniteGridView: UIScrollViewDelegate {
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        adjustGrid(for: scrollView)
+        updateGridLayout()
     }
 
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         guard decelerate == false else { return }
-        self.readjustOffsets()
+        self.realignTilePositionsToCenter()
     }
 
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        self.readjustOffsets()
-    }
-
-    private func readjustOffsets() {
-        guard
-            centreCoordinates != referenceCoordinates,
-            let scrollview = hostScrollView else { return }
-        let xOffset = CGFloat(centreCoordinates.x - referenceCoordinates.x) * tileSize
-        let yOffset = CGFloat(centreCoordinates.y - referenceCoordinates.y) * tileSize
-        referenceCoordinates = centreCoordinates
-        let allocatedTiles = reuseQueue.allocatedViews(withIdentifier: reuseViewIdentifier)
-        for tile in allocatedTiles {
-            var frame = tile.frame
-            frame.origin.x -= xOffset
-            frame.origin.y -= yOffset
-            tile.frame = frame
-        }
-        var newContentOffset = scrollview.contentOffset
-        newContentOffset.x -= xOffset
-        newContentOffset.y -= yOffset
-        scrollview.setContentOffset(newContentOffset, animated: false)
+        self.realignTilePositionsToCenter()
     }
 }
 
 // MARK: - Private
 extension InfiniteGridView {
 
-    private func centreContent(with gridOffset: CGFloat) {
+    private func centerScrollViewContent(with gridOffset: CGFloat) {
         guard let scrollview = hostScrollView else { return }
+
         let xOffset = gridOffset - ((scrollview.frame.size.width - self.frame.size.width) * 0.5)
         let yOffset = gridOffset - ((scrollview.frame.size.height - self.frame.size.height) * 0.5)
         scrollview.setContentOffset(CGPoint(x: xOffset, y: yOffset), animated: false)
     }
 
-    private func allocateInitialTiles() {
-        if let scrollview = hostScrollView {
-            adjustGrid(for: scrollview)
-        }
-    }
-
-    private func populateGridInBounds(lowerX: Int, upperX: Int, lowerY: Int, upperY: Int) {
-        let views = reuseQueue.allocatedViews(withIdentifier: reuseViewIdentifier) as? [ImageTileView] ?? []
+    private func addTilesInVisibleBounds(lowerX: Int, upperX: Int, lowerY: Int, upperY: Int) {
+        let views = reuseQueue.presentingViews(withIdentifier: reuseViewIdentifier) as? [ImageTileView] ?? []
         let coordinatesSet: Set<Coordinates> = Set(views.map { $0.coordinates })
 
         var coordX = lowerX
@@ -122,7 +115,7 @@ extension InfiniteGridView {
             var coordY = lowerY
             while coordY <= upperY {
                 if coordinatesSet.contains(Coordinates(x: coordX, y: coordY)) == false {
-                    allocateTile(at: Coordinates(x: coordX, y: coordY))
+                    createTile(at: Coordinates(x: coordX, y: coordY))
                 }
                 coordY += 1
             }
@@ -130,8 +123,8 @@ extension InfiniteGridView {
         }
     }
 
-    private func clearGridOutsideBounds(lowerX: Int, upperX: Int, lowerY: Int, upperY: Int) {
-        guard let tilesToProcess = reuseQueue.allocatedViews(withIdentifier: reuseViewIdentifier) as? [ImageTileView] else {
+    private func removeTilesOutsideVisibleBounds(lowerX: Int, upperX: Int, lowerY: Int, upperY: Int) {
+        guard let tilesToProcess = reuseQueue.presentingViews(withIdentifier: reuseViewIdentifier) as? [ImageTileView] else {
             return
         }
 
@@ -145,10 +138,10 @@ extension InfiniteGridView {
         }
     }
 
-    private func allocateTile(at tileCoordinates: Coordinates) {
+    private func createTile(at tileCoordinates: Coordinates) {
         let tile = (reuseQueue.dequeueReusableView(withIdentifier: reuseViewIdentifier) as? ImageTileView) ?? ImageTileView(imageLoader: imageLoader)
         tile.update(with: frameForTile(at: tileCoordinates), coordinates: tileCoordinates)
-        reuseQueue.createView(tile, withIdentifier: reuseViewIdentifier)
+        reuseQueue.appendPresentingView(tile, withIdentifier: reuseViewIdentifier)
 
         self.addSubview(tile)
     }
@@ -161,22 +154,6 @@ extension InfiniteGridView {
         return CGRect(x: xOffset, y: yOffset, width: tileSize, height: tileSize)
     }
 
-    private func adjustGrid(for scrollview: UIScrollView) {
-        let centre = computedCentreCoordinates(scrollview)
-        guard centre != centreCoordinates else { return }
-        self.centreCoordinates = centre
-        let xTilesRequired = Int(UIScreen.main.bounds.size.width / tileSize)
-        let yTilesRequired = Int(UIScreen.main.bounds.size.height / tileSize)
-        let lowerBoundX = centre.x - xTilesRequired
-        let upperBoundX = centre.x + xTilesRequired
-        let lowerBoundY = centre.y - yTilesRequired
-        let upperBoundY = centre.y + yTilesRequired
-        populateGridInBounds(lowerX: lowerBoundX, upperX: upperBoundX,
-                             lowerY: lowerBoundY, upperY: upperBoundY)
-        clearGridOutsideBounds(lowerX: lowerBoundX, upperX: upperBoundX,
-                               lowerY: lowerBoundY, upperY: upperBoundY)
-    }
-
 
     private func computedCentreCoordinates(_ scrollview: UIScrollView) -> Coordinates {
         let contentOffset = scrollview.contentOffset
@@ -186,5 +163,24 @@ extension InfiniteGridView {
         let xIntOffset = Int((xOffset / tileSize).rounded())
         let yIntOffset = Int((yOffset / tileSize).rounded())
         return Coordinates(x: xIntOffset + referenceCoordinates.x, y: yIntOffset + referenceCoordinates.y)
+    }
+
+    private func realignTilePositionsToCenter() {
+        guard centreCoordinates != referenceCoordinates,
+              let scrollview = hostScrollView else { return }
+        let xOffset = CGFloat(centreCoordinates.x - referenceCoordinates.x) * tileSize
+        let yOffset = CGFloat(centreCoordinates.y - referenceCoordinates.y) * tileSize
+        referenceCoordinates = centreCoordinates
+        let allocatedTiles = reuseQueue.presentingViews(withIdentifier: reuseViewIdentifier)
+        for tile in allocatedTiles {
+            var frame = tile.frame
+            frame.origin.x -= xOffset
+            frame.origin.y -= yOffset
+            tile.frame = frame
+        }
+        var newContentOffset = scrollview.contentOffset
+        newContentOffset.x -= xOffset
+        newContentOffset.y -= yOffset
+        scrollview.setContentOffset(newContentOffset, animated: false)
     }
 }

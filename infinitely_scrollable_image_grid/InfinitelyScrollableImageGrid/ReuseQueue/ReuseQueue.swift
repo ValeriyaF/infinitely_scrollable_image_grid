@@ -9,9 +9,9 @@ import UIKit
 
 protocol ReuseQueue {
 
-    func createView(_ view: UIView, withIdentifier identifier: String)
+    func appendPresentingView(_ view: UIView, withIdentifier identifier: String)
     func removeAll(withIdentifier identifier: String)
-    func allocatedViews(withIdentifier identifier: String) -> [UIView]
+    func presentingViews(withIdentifier identifier: String) -> [UIView]
 
     func dequeueReusableView(withIdentifier identifier: String) -> UIView?
     func enqueueReusableView(_ view: UIView, withIdentifier identifier: String)
@@ -22,7 +22,7 @@ final class ReuseQueueImpl: ReuseQueue {
     private var reusePool: [String: [UIView]] = [:]
     private var presentingViews: [String: [UIView]] = [:]
 
-    func createView(_ view: UIView, withIdentifier identifier: String) {
+    func appendPresentingView(_ view: UIView, withIdentifier identifier: String) {
         presentingViews[identifier, default: []].append(view)
     }
 
@@ -34,7 +34,7 @@ final class ReuseQueueImpl: ReuseQueue {
 //        reusePool[identifier] = []
     }
 
-    func allocatedViews(withIdentifier identifier: String) -> [UIView] {
+    func presentingViews(withIdentifier identifier: String) -> [UIView] {
         presentingViews[identifier] ?? []
     }
 
