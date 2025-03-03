@@ -7,7 +7,17 @@
 
 import UIKit
 
-final class ReuseQueue {
+protocol ReuseQueue {
+
+    func createView(_ view: UIView, withIdentifier identifier: String)
+    func removeAll(withIdentifier identifier: String)
+    func allocatedViews(withIdentifier identifier: String) -> [UIView]
+
+    func dequeueReusableView(withIdentifier identifier: String) -> UIView?
+    func enqueueReusableView(_ view: UIView, withIdentifier identifier: String)
+}
+
+final class ReuseQueueImpl: ReuseQueue {
 
     private var reusePool: [String: [UIView]] = [:]
     private var presentingViews: [String: [UIView]] = [:]
