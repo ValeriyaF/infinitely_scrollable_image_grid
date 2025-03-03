@@ -9,9 +9,11 @@ import UIKit
 
 enum Constants {
     static let initialTileSize: CGFloat = 100.0
+    static let maxTileSize: CGFloat = UIScreen.main.bounds.size.height / 2.0
+    static let minTileSize: CGFloat = UIScreen.main.bounds.size.height / 25.0
 }
 
-class InfinitelyScrollableImageGridViewController: UIViewController {
+final class InfinitelyScrollableImageGridViewController: UIViewController {
     
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -93,7 +95,30 @@ extension InfinitelyScrollableImageGridViewController {
         guard sender.state == .changed || sender.state == .ended else { return }
 
         let scale = sender.scale
+        let currentTileSize = gridView.tileSize
         sender.scale = 1.0
+
+        guard currentTileSize >= Constants.minTileSize && currentTileSize <= Constants.maxTileSize else {
+            if currentTileSize < Constants.minTileSize {
+                gridView.zoom(with: Constants.minTileSize / currentTileSize)
+            } else if currentTileSize > Constants.maxTileSize {
+                gridView.zoom(with: Constants.maxTileSize / currentTileSize)
+            }
+
+            showWarningAlert()
+            return
+        }
+
         gridView.zoom(with: scale)
+    }
+
+    private func showWarningAlert() {
+        let alert = UIAlertController(
+            title: "Warning",
+            message: "Sorry, zoom scale is out of acceptable range",
+            preferredStyle: UIAlertController.Style.alert
+        )
+        alert.addAction(UIAlertAction(title: "Ok", style: UIAlertAction.Style.default, handler: nil))
+        present(alert, animated: true, completion: nil)
     }
 }

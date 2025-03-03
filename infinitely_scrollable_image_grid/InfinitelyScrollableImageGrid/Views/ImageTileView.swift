@@ -7,7 +7,7 @@
 
 import UIKit
 
-class ImageTileView: UIView, ReusableView {
+final class ImageTileView: UIView, ReusableView {
 
     private(set) var coordinates: Coordinates
 
@@ -76,5 +76,6 @@ extension ImageTileView {
         imageLoadTask?.cancel()
         imageView.image = nil
         frame = .zero
+        coordinates = Coordinates(x: 0, y: 0)
     }
 }

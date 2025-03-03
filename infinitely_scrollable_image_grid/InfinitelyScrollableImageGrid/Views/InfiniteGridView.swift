@@ -7,7 +7,7 @@
 
 import UIKit
 
-class InfiniteGridView: UIView {
+final class InfiniteGridView: UIView {
     private weak var hostScrollView: UIScrollView?
 
     private(set) var referenceCoordinates: Coordinates = .init(x: 0, y: 0)
