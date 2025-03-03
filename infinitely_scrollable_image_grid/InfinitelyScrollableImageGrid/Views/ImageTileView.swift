@@ -16,7 +16,6 @@ final class ImageTileView: UIView, ReusableView {
     private let imageLoader: ImageLoader
     private var imageLoadTask: Task<Void, Error>?
 
-    // MARK: Initialization
     init(imageLoader: ImageLoader) {
         self.imageLoader = imageLoader
         coordinates = .init(x: 0, y: 0)
