@@ -18,7 +18,16 @@ protocol ImageLoader {
 
 final class ImageLoaderImpl: ImageLoader {
 
-    private var imageCache = NSCache<NSString, PicsumImage>()
+    private let urlSession: URLSession
+    private var imageCache: NSCache<NSString, PicsumImage>
+
+    init(
+        urlSession: URLSession = .shared,
+        imageCache:NSCache<NSString, PicsumImage> = NSCache<NSString, PicsumImage>()
+    ) {
+        self.urlSession = urlSession
+        self.imageCache = imageCache
+    }
 
     func loadRandomImage(for key: String, size: Int) async throws -> UIImage {
         let nsKey = key as NSString
@@ -35,19 +44,20 @@ final class ImageLoaderImpl: ImageLoader {
     }
 }
 
+// MARK: - Private
 extension ImageLoaderImpl {
 
     private func loadImage(byId id: String? = nil, size: Int) async throws -> PicsumImage {
         guard let url = buildURL(id: id, size: size) else { throw ImageLoaderErrors.cannotLoadImage }
 
-        let (data, urlResp) = try await URLSession.shared.data(from: url)
+        let (data, urlResp) = try await urlSession.data(from: url)
         guard let image = UIImage(data: data) else { throw ImageLoaderErrors.cannotDecodeImage  }
         let imageId = (urlResp as? HTTPURLResponse)?.value(forHTTPHeaderField: "picsum-id")
 
         return PicsumImage(id: imageId, image: image)
     }
 
-    func buildURL(id: String?, size: Int) -> URL? {
+    private func buildURL(id: String?, size: Int) -> URL? {
         guard var url = URL(string: "https://picsum.photos") else { return nil }
 
         if let id = id {

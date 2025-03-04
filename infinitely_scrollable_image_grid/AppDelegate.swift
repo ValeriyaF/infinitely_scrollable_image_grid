@@ -13,12 +13,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        window = UIWindow(frame: UIScreen.main.bounds)
-        
-        let vc = InfinitelyScrollableImageGridViewController(imageLoader: ImageLoaderImpl())
-        
-        window?.rootViewController = vc
-        window?.makeKeyAndVisible()
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
+            window = UIWindow(frame: UIScreen.main.bounds)
+
+            let vc = InfinitelyScrollableImageGridViewController(imageLoader: ImageLoaderImpl())
+
+            window?.rootViewController = vc
+            window?.makeKeyAndVisible()
+        }
+
         
         return true
     }

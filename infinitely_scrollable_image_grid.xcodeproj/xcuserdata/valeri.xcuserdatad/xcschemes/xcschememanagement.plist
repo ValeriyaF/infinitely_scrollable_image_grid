@@ -9,6 +9,29 @@
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
+		<key>infinitely_scrollable_image_gridTests.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>3A653B1D2D7380B200372844</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>3A653B332D7380B200372844</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>3A653B3D2D7380B200372844</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
 	</dict>
 </dict>
 </plist>
