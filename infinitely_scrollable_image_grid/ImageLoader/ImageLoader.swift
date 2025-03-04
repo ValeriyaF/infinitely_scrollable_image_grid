@@ -8,12 +8,14 @@
 import UIKit
 
 enum ImageLoaderErrors: Error {
+
     case cannotLoadImage
     case cannotDecodeImage
 }
 
 protocol ImageLoader {
-    func loadRandomImage(for key: String, size: Int) async throws -> UIImage
+    
+    func load(for key: String, minSize: Int) async throws -> UIImage
 }
 
 final class ImageLoaderImpl: ImageLoader {
@@ -29,15 +31,15 @@ final class ImageLoaderImpl: ImageLoader {
         self.imageCache = imageCache
     }
 
-    func loadRandomImage(for key: String, size: Int) async throws -> UIImage {
+    func load(for key: String, minSize: Int) async throws -> UIImage {
         let nsKey = key as NSString
         let cachedImage: PicsumImage? = imageCache.object(forKey: nsKey)
 
-        if let cachedImage, cachedImage.image.size.width >= CGFloat(size) {
+        if let cachedImage, cachedImage.image.size.width >= CGFloat(minSize) {
             return cachedImage.image
         }
 
-        let image = try await loadImage(byId: cachedImage?.id, size: size)
+        let image = try await loadImage(byId: cachedImage?.id, size: minSize)
         imageCache.setObject(image, forKey: nsKey)
 
         return image.image

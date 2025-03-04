@@ -9,7 +9,8 @@ import UIKit
 
 enum Constants {
     static let initialTileSize: CGFloat = 100.0
-    static let maxTileSize: CGFloat = UIScreen.main.bounds.size.height / 2.0
+
+    static let maxTileSize: CGFloat = UIScreen.main.bounds.size.height / 2.5
     static let minTileSize: CGFloat = UIScreen.main.bounds.size.height / 25.0
 }
 
@@ -24,11 +25,7 @@ final class InfinitelyScrollableImageGridViewController: UIViewController {
     }()
     private let gridView: InfiniteGridView
 
-    private let imageLoader: ImageLoader
-
     init(imageLoader: ImageLoader) {
-        self.imageLoader = imageLoader
-
         self.gridView = InfiniteGridView(
             hostScrollView: scrollView,
             imageLoader: imageLoader,

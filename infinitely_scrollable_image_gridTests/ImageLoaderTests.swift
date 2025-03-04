@@ -41,7 +41,7 @@ final class ImageLoaderTests: XCTestCase {
         imageCacheMock.setObject(picsumImage, forKey: key as NSString)
 
         // When
-        let returnedImage = try await imageLoader.loadRandomImage(for: key, size: Int(image.size.width) / 2)
+        let returnedImage = try await imageLoader.load(for: key, minSize: Int(image.size.width) / 2)
 
         // Then
         XCTAssertEqual(returnedImage, image, "Should return the cached image without a network call")
@@ -70,9 +70,9 @@ final class ImageLoaderTests: XCTestCase {
         }
 
         // When
-        let returnedImage = try await imageLoader.loadRandomImage(
+        let returnedImage = try await imageLoader.load(
             for: key,
-            size: Int(smallImage.size.width) * 2
+            minSize: Int(smallImage.size.width) * 2
         )
 
         // Then
@@ -102,7 +102,7 @@ final class ImageLoaderTests: XCTestCase {
         }
 
         // When
-        let returnedImage = try await imageLoader.loadRandomImage(for: key, size: 200)
+        let returnedImage = try await imageLoader.load(for: key, minSize: 200)
 
         // Then
         XCTAssertEqual(returnedImage.ciImage, testImage.ciImage)
@@ -129,7 +129,7 @@ final class ImageLoaderTests: XCTestCase {
         }
 
         do {
-            _ = try await imageLoader.loadRandomImage(for: key, size: 300)
+            _ = try await imageLoader.load(for: key, minSize: 300)
             XCTFail("Expected cannotDecodeImage error")
         } catch let error as ImageLoaderErrors {
             XCTAssertEqual(error, .cannotDecodeImage)

@@ -9,6 +9,7 @@ import UIKit
 
 // NSCache requires reference semantics
 final class PicsumImage {
+    
     let id: String?
     let image: UIImage
 

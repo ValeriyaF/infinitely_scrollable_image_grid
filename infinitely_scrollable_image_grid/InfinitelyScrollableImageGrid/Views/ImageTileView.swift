@@ -39,14 +39,14 @@ final class ImageTileView: UIView, ReusableView {
     func loadImage(for coordinates: Coordinates, size: Int) {
         imageLoadTask?.cancel()
         imageLoadTask = Task {
-            if let image = try? await imageLoader.loadRandomImage(for: coordinates.key, size: size) {
+            if let image = try? await imageLoader.load(for: coordinates.key, minSize: size) {
                 imageView.image = image
             }
         }
     }
 
     required init?(coder aDecoder: NSCoder) {
-        return nil
+        fatalError("init(coder:) has not been implemented")
     }
 }
 
