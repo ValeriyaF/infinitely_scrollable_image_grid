@@ -7,5 +7,6 @@
 
 
 protocol ReusableView {
+    
     func prepareForReuse()
 }

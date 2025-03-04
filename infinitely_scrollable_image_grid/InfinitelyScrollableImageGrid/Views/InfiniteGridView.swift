@@ -8,16 +8,17 @@
 import UIKit
 
 final class InfiniteGridView: UIView {
+    
     private weak var hostScrollView: UIScrollView?
 
     private(set) var referenceCoordinates: Coordinates = .init(x: 0, y: 0)
     private(set) var tileSize: CGFloat
     private(set) var centreCoordinates: Coordinates = .init(x: Int.max, y: Int.max)
 
+    private var presentingViews: Set<ImageTileView> = []
+
     private let reuseQueue: ReuseQueue
     private let reuseViewIdentifier = "GridTile"
-
-    private var contentOffsetObserver: NSKeyValueObservation?
 
     private let imageLoader: ImageLoader
 
@@ -67,7 +68,10 @@ final class InfiniteGridView: UIView {
     }
 
     func zoom(with scale: CGFloat) {
-        reuseQueue.removeAll(withIdentifier: reuseViewIdentifier)
+        for view in presentingViews {
+            view.removeFromSuperview()
+        }
+        presentingViews = []
 
         let newTileSize = tileSize * scale
         tileSize = newTileSize
@@ -107,8 +111,7 @@ extension InfiniteGridView {
     }
 
     private func addTilesInVisibleBounds(lowerX: Int, upperX: Int, lowerY: Int, upperY: Int) {
-        let views = reuseQueue.presentingViews(withIdentifier: reuseViewIdentifier) as? [ImageTileView] ?? []
-        let coordinatesSet: Set<Coordinates> = Set(views.map { $0.coordinates })
+        let coordinatesSet: Set<Coordinates> = Set(presentingViews.map { $0.coordinates })
 
         var coordX = lowerX
         while coordX <= upperX {
@@ -124,14 +127,15 @@ extension InfiniteGridView {
     }
 
     private func removeTilesOutsideVisibleBounds(lowerX: Int, upperX: Int, lowerY: Int, upperY: Int) {
-        guard let tilesToProcess = reuseQueue.presentingViews(withIdentifier: reuseViewIdentifier) as? [ImageTileView] else {
+        guard presentingViews.isEmpty == false else {
             return
         }
 
-        for tile in tilesToProcess {
+        for tile in presentingViews {
             let tileX = tile.coordinates.x
             let tileY = tile.coordinates.y
             if tileX < lowerX || tileX > upperX || tileY < lowerY || tileY > upperY {
+                tile.prepareForReuse()
                 reuseQueue.enqueueReusableView(tile, withIdentifier: reuseViewIdentifier)
                 tile.removeFromSuperview()
             }
@@ -141,7 +145,7 @@ extension InfiniteGridView {
     private func createTile(at tileCoordinates: Coordinates) {
         let tile = (reuseQueue.dequeueReusableView(withIdentifier: reuseViewIdentifier) as? ImageTileView) ?? ImageTileView(imageLoader: imageLoader)
         tile.update(with: frameForTile(at: tileCoordinates), coordinates: tileCoordinates)
-        reuseQueue.appendPresentingView(tile, withIdentifier: reuseViewIdentifier)
+        presentingViews.insert(tile)
 
         self.addSubview(tile)
     }
@@ -171,8 +175,7 @@ extension InfiniteGridView {
         let xOffset = CGFloat(centreCoordinates.x - referenceCoordinates.x) * tileSize
         let yOffset = CGFloat(centreCoordinates.y - referenceCoordinates.y) * tileSize
         referenceCoordinates = centreCoordinates
-        let allocatedTiles = reuseQueue.presentingViews(withIdentifier: reuseViewIdentifier)
-        for tile in allocatedTiles {
+        for tile in presentingViews {
             var frame = tile.frame
             frame.origin.x -= xOffset
             frame.origin.y -= yOffset

@@ -9,10 +9,6 @@ import UIKit
 
 protocol ReuseQueue {
 
-    func appendPresentingView(_ view: UIView, withIdentifier identifier: String)
-    func removeAll(withIdentifier identifier: String)
-    func presentingViews(withIdentifier identifier: String) -> [UIView]
-
     func dequeueReusableView(withIdentifier identifier: String) -> UIView?
     func enqueueReusableView(_ view: UIView, withIdentifier identifier: String)
 }
@@ -20,23 +16,6 @@ protocol ReuseQueue {
 final class ReuseQueueImpl: ReuseQueue {
 
     private var reusePool: [String: [UIView]] = [:]
-    private var presentingViews: [String: [UIView]] = [:]
-
-    func appendPresentingView(_ view: UIView, withIdentifier identifier: String) {
-        presentingViews[identifier, default: []].append(view)
-    }
-
-    func removeAll(withIdentifier identifier: String) {
-        for view in (presentingViews[identifier] ?? []) {
-            view.removeFromSuperview()
-        }
-        presentingViews[identifier] = []
-//        reusePool[identifier] = []
-    }
-
-    func presentingViews(withIdentifier identifier: String) -> [UIView] {
-        presentingViews[identifier] ?? []
-    }
 
     func dequeueReusableView(withIdentifier identifier: String) -> UIView? {
         guard var views = reusePool[identifier], views.isEmpty == false else {
@@ -49,16 +28,6 @@ final class ReuseQueueImpl: ReuseQueue {
     }
 
     func enqueueReusableView(_ view: UIView, withIdentifier identifier: String) {
-        if let reusableView = view as? ReusableView {
-            reusableView.prepareForReuse()
-        }
-
         reusePool[identifier, default: []].append(view)
-
-        var allocated = presentingViews[identifier, default: []]
-        if let index = allocated.firstIndex(of: view) {
-            allocated.remove(at: index)
-            presentingViews[identifier] = allocated
-        }
     }
 }
