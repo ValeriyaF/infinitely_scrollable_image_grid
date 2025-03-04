@@ -53,11 +53,6 @@
 			path = infinitely_scrollable_image_gridTests;
 			sourceTree = "<group>";
 		};
-		3A653B412D7380B200372844 /* infinitely_scrollable_image_gridUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = infinitely_scrollable_image_gridUITests;
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,7 +85,6 @@
 			children = (
 				3A653B202D7380B200372844 /* infinitely_scrollable_image_grid */,
 				3A653B372D7380B200372844 /* infinitely_scrollable_image_gridTests */,
-				3A653B412D7380B200372844 /* infinitely_scrollable_image_gridUITests */,
 				3A653B1F2D7380B200372844 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -165,9 +159,6 @@
 			);
 			dependencies = (
 				3A653B402D7380B200372844 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				3A653B412D7380B200372844 /* infinitely_scrollable_image_gridUITests */,
 			);
 			name = infinitely_scrollable_image_gridUITests;
 			packageProductDependencies = (
